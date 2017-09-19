@@ -1,0 +1,11 @@
+prefix=/Users/blakesartor/Desktop/csci3081/repo-group-C10/project/iteration3/ext/libpng-1.6.16
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/libpng16
+
+Name: libpng
+Description: Loads and saves PNG files
+Version: 1.6.16
+Libs: -L${libdir} -lpng16
+Libs.private: -lz 
+Cflags: -I${includedir}

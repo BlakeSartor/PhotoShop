@@ -1,0 +1,98 @@
+CC = g++
+
+CFLAGS = -std=c++11
+
+UNAME = $(shell uname)
+
+ifeq ($(UNAME), Darwin)
+	LINK_LIBS += -framework GLUT -framework openGL
+else
+	LINK_LIBS += -lglut -lGL -lGLU
+endif
+
+GLUI = glui
+GLUI_PATH = ../../../ext/glui
+GLUI_LIB = $(GLUI_PATH)/lib/lib$(GLUI).a
+
+PNG = png
+PNG_PATH = ../../../ext/libpng-1.6.16
+PNG_LIB = $(PNG_PATH)/lib/lib$(PNG).a
+
+JPEG = jpeg
+JPEG_PATH = ../../../ext/jpeg-9a
+JPEG_LIB = $(JPEG_PATH)/lib/lib$(JPEG).a
+
+LIBIMGTOOLS = libimgtools
+LIBIMGTOOLS_PATH = $(LIBDIR)
+LIBIMGTOOLS_LIB = $(LIBIMGTOOLS_PATH)/$(LIBIMGTOOLS).a
+
+INCLUDE += -I$(LIBIMGTOOLS_DIR)/include
+INCLUDE += -Isrc
+INCLUDE += -I$(GLUI_PATH)/include
+INCLUDE += -I$(PNG_PATH)/include
+INCLUDE += -I$(JPEG_PATH)/include
+
+LINK_LIBS += -L$(GLUI_PATH)/lib/ -lglui
+LINK_LIBS += -L$(PNG_PATH)/lib/ -lpng
+LINK_LIBS += -L$(JPEG_PATH)/lib/ -ljpeg
+LINK_LIBS += -L$(LIBIMGTOOLS_PATH)/lib/ -limgtools
+LINK_LIBS += -lz
+
+OBJECT_PATH = obj
+SOURCE_PATH = src
+
+OBJECTS = $(addprefix $(OBJECT_PATH)/,  $(FILENAMES:.cc=.o))
+CPPFILES = $(wildcard $(SOURCE_DIR)/*.cc)
+FILENAMES =  $(notdir $(CPPFILES))
+
+SRC_CXX += src/filter_manager.cc
+SRC_CXX += src/flashphoto_app.cc
+SRC_CXX += src/io_manager.cc
+SRC_CXX += src/state_manager.cc
+SRC_CXX += src/main.cc
+SRC_CXX += src/image_manager.cc
+
+OBJ_CXX += obj/filter_manager.o
+OBJ_CXX += obj/flashphoto_app.o
+OBJ_CXX += obj/io_manager.o
+OBJ_CXX += obj/state_manager.o
+OBJ_CXX += obj/image_manager.o
+
+
+.PHONY: all glui 
+
+all: bin/FlashPhoto
+
+bin/FlashPhoto: $(GLUI_LIB) $(PNG_LIB) $(JPEG_LIB) $(LIBIMGTOOLS_LIB) $(OBJ_CXX) | bin
+	g++ -o bin/FlashPhoto $(OBJ_CXX) $(LINK_LIBS)
+
+obj/%.o: src/%.cc | obj
+	g++ $(CFLAGS) $(INCLUDE) -o $@ -c $<
+
+$(GLUI_LIB):
+	$(MAKE) -C$(GLUI_PATH) all
+
+$(PNG_LIB):
+	cd $(PNG_PATH); \
+	./configure --prefix=$(abspath $(PNG_PATH)) --enable-shared=no 
+	$(MAKE) -C$(PNG_PATH)
+	#$(MAKE) -C$(PNG_PATH) check
+	$(MAKE) -C$(PNG_PATH) install
+
+$(JPEG_LIB):
+	cd $(JPEG_PATH); \
+	./configure --prefix=$(abspath $(JPEG_PATH)) --enable-shared=no
+	$(MAKE) -C$(JPEG_PATH)
+	$(MAKE) -C$(JPEG_PATH) check
+	$(MAKE) -C$(JPEG_PATH) install
+
+obj bin:
+	mkdir $@
+
+clean:
+	rm -rf obj bin
+
+clean_all: clean
+	$(MAKE) -C$(GLUI_PATH) clean
+	$(MAKE) -C$(PNG_PATH) clean
+	$(MAKE) -C$(JPEG_PATH) clean
